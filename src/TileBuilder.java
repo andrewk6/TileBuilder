@@ -103,7 +103,7 @@ class MapPanel extends JPanel{
 							System.out.println("Drawing");
 							tiles[e.getY() / 32][e.getX() / 32] = img.getSubimage(tPane.getSelected()[0], tPane.getSelected()[1], 32, 32);
 						}
-					}else if(e.getButton() == MouseEvent.BUTTON2){
+					}else if(SwingUtilities.isRightMouseButton(e)){
 						System.out.println("Erasing");
 						tiles[e.getY() / 32][e.getX() / 32] = null;
 					}else{
@@ -115,10 +115,10 @@ class MapPanel extends JPanel{
 		});
 		addMouseListener(new MouseAdapter(){		
 			public void mousePressed(MouseEvent e){
-				if(e.getButton() == MouseEvent.BUTTON1){
+				if(SwingUtilities.isLeftMouseButton(e)){
 					if(tPane.isSelected())
 						tiles[e.getY() / 32][e.getX() / 32] = img.getSubimage(tPane.getSelected()[0], tPane.getSelected()[1], 32, 32);
-				}else if(e.getButton() == MouseEvent.BUTTON2){
+				}else if(SwingUtilities.isRightMouseButton(e)){
 					tiles[e.getY() / 32][e.getX() / 32] = null;
 				}
 				repaint();
@@ -158,8 +158,6 @@ class TilesPanel extends JPanel {
 		tiles = new Image[img.getHeight() / 32][img.getWidth() / 32];
 		selectedTile = new boolean[img.getHeight() / 32][img.getWidth() / 32];
 		 addMouseListener(new MouseAdapter() {
-             private Color background;
-
              @Override
              public void mousePressed(MouseEvent e) {
         		int x = e.getX() / 32;

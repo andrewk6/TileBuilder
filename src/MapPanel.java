@@ -93,9 +93,12 @@ public class MapPanel extends JPanel {
 					if (tPane.isSelected() || mPane.isSelected()) {
 						switch (drawingLayer) {
 						case 0:
-							if (tPane.isSelected())
+							if (tPane.isSelected() && !tPane.isMultiSel())
 								layer1[e.getY() / tileSize][e.getX() / tileSize] = img.getSubimage(
 										tPane.getSelected()[0], tPane.getSelected()[1], tileSize, tileSize);
+							else if(tPane.isMultiSel()){
+//								layer1 = tPane.multiUpdate(layer1);
+							}
 							break;
 						case 1:
 							if (tPane.isSelected())

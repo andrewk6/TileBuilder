@@ -6,6 +6,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -180,6 +181,24 @@ class TilesPanel extends JPanel {
 	}
 	public void setMultiSel(boolean multi){
 		this.multiSel = multi;
+	}
+	
+	public ArrayList<ArrayList<BufferedImage>> getImages(){
+		ArrayList<ArrayList<BufferedImage>> toReturn = new ArrayList<ArrayList<BufferedImage>>();
+		for(int c1 = 0; c1 < selectedTile.length; c1 ++){
+			toReturn.add(new ArrayList<BufferedImage>());
+			for(int c2 = 0; c2 < selectedTile[c1].length; c2 ++){
+				if(selectedTile[c1][c2]){
+					toReturn.get(c1).add(img.getSubimage(c1 * tileSize, c2 * tileSize, tileSize, tileSize));
+				}
+			}
+		}
+		return toReturn;
+	}
+
+	public Image[][] multiUpdate(Image[][] layer1, int x, int y) {
+		Image[][] moddedLayer = new Image[layer1.length][layer1[0].length];
+		return moddedLayer;
 	}
 
 }

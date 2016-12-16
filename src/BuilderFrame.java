@@ -9,12 +9,16 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
 import javax.swing.border.MatteBorder;
 
+import javafx.scene.layout.Background;
+
 public class BuilderFrame extends JFrame {
+	private final Font FONT = new Font("Monospaced", Font.BOLD, 20);
 	private BufferedImage img;
 	private JPanel contentPane;
 	private JPanel mainPane;
@@ -35,7 +39,7 @@ public class BuilderFrame extends JFrame {
 			throw new IllegalStateException("Image failed to load");
 		}
 		JButton exit = new JButton("Exit");
-		exit.setFont(new Font("Monospaced", Font.BOLD, 20));
+		exit.setFont(FONT);
 		exit.setBounds(0, 0, 100, 50);
 		exit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -57,6 +61,28 @@ public class BuilderFrame extends JFrame {
 		MovePanel movePane = new MovePanel(tileSize);
 		MapPanel mapPane = new MapPanel(img, width, height, tiles, movePane, tileSize);
 		mapPane.setBounds(0, 0, width, height);
+		JButton background = new JButton("Background");
+		background.setFont(FONT);
+		background.setBounds(0, 0, 100, 50);
+		background.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0){
+				int option = JOP.buttonInput("Background Option: ", new String[]{
+						"Load Background", "Clear Background", "Cancel"});
+				if(option == 0){
+					JFileChooser fc = new JFileChooser();
+					if(fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
+						try {
+							mapPane.setBackground(ImageIO.read(fc.getSelectedFile()));
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+				}else if(option == 1){
+					mapPane.clearBackground();
+				}
+			}
+		});
+		menuPane.add(background);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		buildInternalFrames(mapPane, movePane);
 		this.setExtendedState(JFrame.MAXIMIZED_BOTH);

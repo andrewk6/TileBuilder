@@ -310,7 +310,7 @@ class TilesPanel extends JPanel {
 			splitTiles();
 		}else{
 			if(img.getWidth() < 1200 && img.getHeight() < 1200){
-				scroll = null;
+				scroll = null; 
 			}
 			this.img = img;
 			falsify();

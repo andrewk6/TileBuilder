@@ -86,7 +86,7 @@ public class BuilderFrame extends JFrame {
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		buildInternalFrames(mapPane, movePane);
 		this.setExtendedState(JFrame.MAXIMIZED_BOTH);
-		menuPane.add(exit);
+		menuPane.add(exit); 
 
 	}
 

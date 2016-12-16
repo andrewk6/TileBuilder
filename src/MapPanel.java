@@ -158,7 +158,7 @@ public class MapPanel extends JPanel {
 					switch (drawingLayer) {
 					case 0:
 						if (tPane.isSelected())
-							layer1[e.getY() / tileSize][e.getX() / tileSize] = null;
+							layer1[e.getY() / tileSize][e.getX() / tileSize] = null; 
 						break;
 					case 1:
 						if (tPane.isSelected())

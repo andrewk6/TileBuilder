@@ -24,7 +24,7 @@ public class MoveTile {
 		value = val;
 	}
 
-	public boolean equals(MoveTile comp) {
+	public boolean equals(MoveTile comp) { 
 		return (((value == comp.getValue()) ? true : false) && ((col == comp.getColor()) ? true : false));
 	}
 

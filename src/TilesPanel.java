@@ -86,7 +86,7 @@ class TilesPanel extends JPanel {
 		addMouseMotionListener(new MouseMotionAdapter(){
 			public void mouseDragged(MouseEvent e){
 				System.out.println("Dragging on Tile");
-				multiSel = true;
+				falsify();
 				int x = e.getX() / tileSize;
 				System.out.println("D-X: " + x);
 				int y = e.getY() / tileSize;
@@ -195,10 +195,67 @@ class TilesPanel extends JPanel {
 		}
 		return toReturn;
 	}
-
+	//Trim 2d array created by directly turning tiles into an array, square it out then add it to the larger one
 	public Image[][] multiUpdate(Image[][] layer1, int x, int y) {
+		int startY = 0;
+		Image[][] trimmed = trim(buildArray());
 		Image[][] moddedLayer = new Image[layer1.length][layer1[0].length];
+		for(int c1 = 0; c1 < trimmed.length; c1 ++){
+			for(int c2 = 0; c2 < trimmed[c2].length; c2 ++){
+				if(trimmed[c1][c2] != null){
+					if(((c1 + x) < moddedLayer.length) && ((c2 + y) < moddedLayer[c1].length)){
+						moddedLayer[c1 + x][c2 + y] = trimmed[c1][c2];
+					}
+				}
+			}
+		}
 		return moddedLayer;
 	}
-
+	public Image[][] buildArray(){
+		Image[][] tilesTemp = tiles;
+		for(int c1 = 0; c1 < tilesTemp.length; c1 ++){
+			for(int c2 = 0; c2 < tilesTemp[c1].length; c2 ++){
+				if(!selectedTile[c1][c2]){
+					tilesTemp[c1][c2] = null;
+				}
+			}
+		}
+		return tilesTemp;
+	}
+	public Image[][] trim(Image[][] imgArray){
+		int firstCol = -1;
+		int curCol = 0;
+		while(firstCol < 0){
+			for(int c1 = 0; c1 < imgArray.length; c1 ++)
+				if(imgArray[c1][curCol] != null)
+					firstCol = curCol;
+				else
+					curCol ++;
+		}
+		int lastCol = -1;
+		curCol = imgArray[0].length - 1;;
+		while(firstCol < 0){
+			for(int c1 = 0; c1 < imgArray.length; c1 ++)
+				if(imgArray[c1][curCol] != null)
+					lastCol = curCol;
+				else
+					curCol --;
+		}
+		Image[][] toReturn = new Image
+				[imgArray.length]
+						[lastCol - firstCol];
+		for(int c1 = 0; c1 < imgArray.length; c1 ++){
+			for(int c2 = firstCol; c2 < lastCol; c2 ++){
+				toReturn[c1][c2-firstCol] = imgArray[c1][c2];
+			}
+		}
+		return toReturn;
+	}
+	
+	public boolean[] fillFalse(int length){
+		boolean[] toReturn = new boolean[length];
+		for(int c1 = 0; c1 < toReturn.length; c1 ++)
+			toReturn[c1] = false;
+		return toReturn;
+	}
 }

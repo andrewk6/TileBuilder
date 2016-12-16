@@ -31,7 +31,7 @@ public class MovePanel extends JPanel {
 				repaint();
 			}
 		});
-		falsify();
+		falsify(); 
 	}
 
 	private void fillColors() {

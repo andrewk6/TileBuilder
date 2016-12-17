@@ -1,5 +1,6 @@
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -10,6 +11,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
+import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -27,61 +29,19 @@ public class MapPanel extends JPanel {
 	private int tileSize;
 	private boolean drawMoveLayer;
 	private Image background;
+	private MovePanel mPane;
 
 	public MapPanel(BufferedImage img, int width, int height, TilesPanel tPane, MovePanel mPane, int tileSize) {
 		super();
+		setPreferredSize(new Dimension(width, height));
 		background = null;
 		setBackground(Color.GRAY);
-		if (width > 1200 || height > 1200) {
-			BufferedImage scrollImg = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
-			JScrollPane scroll = new JScrollPane(new JLabel(new ImageIcon(scrollImg)));
-			scroll.setOpaque(false);
-			scroll.setFocusable(false);
-			scroll.setBorder(null);
-			scroll.addMouseListener(new MouseAdapter() {
-				public void mousePressed(MouseEvent me) {
-					Component child = me.getComponent();
-					Component parent = child.getParent();
-
-					// transform the mouse coordinate to be relative to the
-					// parent
-					// component:
-					int deltax = child.getX() + me.getX();
-					int deltay = child.getY() + me.getY();
-
-					// build new mouse event:
-					MouseEvent parentMouseEvent = new MouseEvent(parent, MouseEvent.MOUSE_PRESSED, me.getWhen(),
-							me.getModifiers(), deltax, deltay, me.getClickCount(), false);
-					// dispatch it to the parent component
-					parent.dispatchEvent(parentMouseEvent);
-				}
-			});
-			scroll.addMouseMotionListener(new MouseMotionAdapter() {
-				public void mouseDragged(MouseEvent me) {
-					Component child = me.getComponent();
-					Component parent = child.getParent();
-
-					// transform the mouse coordinate to be relative to the
-					// parent
-					// component:
-					int deltax = child.getX() + me.getX();
-					int deltay = child.getY() + me.getY();
-
-					// build new mouse event:
-					MouseEvent parentMouseEvent = new MouseEvent(parent, MouseEvent.MOUSE_DRAGGED, me.getWhen(),
-							me.getModifiers(), deltax, deltay, me.getClickCount(), false);
-					// dispatch it to the parent component
-					parent.dispatchEvent(parentMouseEvent);
-				}
-			});
-			scroll.getViewport().setOpaque(false);
-			this.add(scroll);
-		}
 		this.tileSize = tileSize;
 		this.width = width;
 		this.height = height;
 		this.img = img;
 		this.tPane = tPane;
+		this.mPane = mPane;
 		setBackground(Color.BLACK);
 		drawingLayer = 0;
 		layer1 = new Image[height / tileSize][width / tileSize];
@@ -90,6 +50,10 @@ public class MapPanel extends JPanel {
 		previewLayer = new Image[height / tileSize][width / tileSize];
 		walking = new MoveTile[height / tileSize][width / tileSize];
 		nullWalking();
+		buildListeners();
+	}
+	
+	public void buildListeners(){
 		addMouseMotionListener(new MouseMotionAdapter() {
 			public void mouseMoved(MouseEvent e) {
 				int x, y;
@@ -516,6 +480,14 @@ public class MapPanel extends JPanel {
 	public TilesPanel getTPane() {
 		return tPane;
 	}
+	
+	public MovePanel getMPane(){
+		return mPane;
+	}
+	
+	public void setMPane(MovePanel mPane){
+		this.mPane = mPane;
+	}
 
 	public int getTileSize() {
 		return tileSize;
@@ -549,5 +521,10 @@ public class MapPanel extends JPanel {
 	public void clearBackground(){
 		this.background = null;
 		repaint();
+	}
+	
+	public void setTileMap(TilesPanel tiles){
+		this.tPane = tiles;
+		img = tiles.getImg();
 	}
 }

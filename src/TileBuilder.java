@@ -54,5 +54,14 @@ public class TileBuilder {
 		BuilderFrame frame = new BuilderFrame("Test", 32, 320, 320);
 
 		frame.show();
+//		while(!frame.isWorking()){
+//			System.out.println("Clear");
+//		}
+//		frame.setVisible(false);
+//		frame.disable();
+//		frame.dispose();
+//		frame = null;
+//		BuilderFrame frame2 = new BuilderFrame("Test 2", 32, 320, 320);
+//		frame2.show();
 	}
 }

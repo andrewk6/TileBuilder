@@ -1,5 +1,6 @@
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
@@ -19,53 +20,9 @@ class TilesPanel extends JPanel {
 	private boolean[][] selectedTile;
 	private int tileSize;
 	private boolean multiSel;
-	private JScrollPane scroll;
 
 	public TilesPanel(BufferedImage img, int tileSize) {
 		super();
-		if(img.getWidth() > 1200 || img.getHeight() > 1200){
-			BufferedImage scrollImg = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_4BYTE_ABGR);
-			scroll = new JScrollPane(new JLabel(new ImageIcon(scrollImg)));
-			scroll.setOpaque(false);
-			scroll.setFocusable(false);
-			scroll.setBorder(null);
-			scroll.addMouseListener(new MouseAdapter() {
-				public void mousePressed(MouseEvent me) {
-					Component child = me.getComponent();
-					Component parent = child.getParent();
-
-					// transform the mouse coordinate to be relative to the parent
-					// component:
-					int deltax = child.getX() + me.getX();
-					int deltay = child.getY() + me.getY();
-
-					// build new mouse event:
-					MouseEvent parentMouseEvent = new MouseEvent(parent, MouseEvent.MOUSE_PRESSED, me.getWhen(),
-							me.getModifiers(), deltax, deltay, me.getClickCount(), false);
-					// dispatch it to the parent component
-					parent.dispatchEvent(parentMouseEvent);
-				}
-			});
-			scroll.addMouseMotionListener(new MouseMotionAdapter() {
-				public void mouseDragged(MouseEvent me) {
-					Component child = me.getComponent();
-					Component parent = child.getParent();
-
-					// transform the mouse coordinate to be relative to the parent
-					// component:
-					int deltax = child.getX() + me.getX();
-					int deltay = child.getY() + me.getY();
-
-					// build new mouse event:
-					MouseEvent parentMouseEvent = new MouseEvent(parent, MouseEvent.MOUSE_DRAGGED, me.getWhen(),
-							me.getModifiers(), deltax, deltay, me.getClickCount(), false);
-					// dispatch it to the parent component
-					parent.dispatchEvent(parentMouseEvent);
-				}
-			});
-			scroll.getViewport().setOpaque(false);
-			this.add(scroll);
-		}
 		this.tileSize = tileSize;
 		setBackground(Color.GREEN);
 		this.img = img;
@@ -260,61 +217,8 @@ class TilesPanel extends JPanel {
 		return toReturn;
 	}
 	
-	public void chnageTileSet(BufferedImage img){
-		if(scroll == null){
-			if(img.getWidth() > 1200 || img.getHeight() > 1200){
-				BufferedImage scrollImg = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_4BYTE_ABGR);
-				scroll = new JScrollPane(new JLabel(new ImageIcon(scrollImg)));
-				scroll.setOpaque(false);
-				scroll.setFocusable(false);
-				scroll.setBorder(null);
-				scroll.addMouseListener(new MouseAdapter() {
-					public void mousePressed(MouseEvent me) {
-						Component child = me.getComponent();
-						Component parent = child.getParent();
-
-						// transform the mouse coordinate to be relative to the parent
-						// component:
-						int deltax = child.getX() + me.getX();
-						int deltay = child.getY() + me.getY();
-
-						// build new mouse event:
-						MouseEvent parentMouseEvent = new MouseEvent(parent, MouseEvent.MOUSE_PRESSED, me.getWhen(),
-								me.getModifiers(), deltax, deltay, me.getClickCount(), false);
-						// dispatch it to the parent component
-						parent.dispatchEvent(parentMouseEvent);
-					}
-				});
-				scroll.addMouseMotionListener(new MouseMotionAdapter() {
-					public void mouseDragged(MouseEvent me) {
-						Component child = me.getComponent();
-						Component parent = child.getParent();
-
-						// transform the mouse coordinate to be relative to the parent
-						// component:
-						int deltax = child.getX() + me.getX();
-						int deltay = child.getY() + me.getY();
-
-						// build new mouse event:
-						MouseEvent parentMouseEvent = new MouseEvent(parent, MouseEvent.MOUSE_DRAGGED, me.getWhen(),
-								me.getModifiers(), deltax, deltay, me.getClickCount(), false);
-						// dispatch it to the parent component
-						parent.dispatchEvent(parentMouseEvent);
-					}
-				});
-				scroll.getViewport().setOpaque(false);
-				this.add(scroll);
-			}
-			this.img = img;
-			falsify();
-			splitTiles();
-		}else{
-			if(img.getWidth() < 1200 && img.getHeight() < 1200){
-				scroll = null; 
-			}
-			this.img = img;
-			falsify();
-			splitTiles();
-		}
-	}
+//	public Dimension getPreferredSize()
+//	{
+//	    return new Dimension(300, 300);
+//	}
 }

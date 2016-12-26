@@ -6,9 +6,13 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;
@@ -17,6 +21,9 @@ import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.MatteBorder;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import javafx.scene.layout.Background;
 
@@ -32,10 +39,12 @@ public class BuilderFrame extends JFrame {
 	private JInternalFrame map;
 	private JInternalFrame moveFrame;
 	private MapPanel mapPane;
+	private ToolPane toolPane;
 
 	public BuilderFrame(String title, int tileSize, int width, int height) {
 		super(title);
-		working = false;
+		toolPane = new ToolPane();
+		working = true;
 		this.tileSize = tileSize;
 		try {
 			img = ImageIO.read(this.getClass().getResourceAsStream("Tiles.png"));
@@ -55,6 +64,50 @@ public class BuilderFrame extends JFrame {
 				System.exit(0);
 			}
 		});
+		JButton export = new JButton("Export");
+		export.setFont(FONT);
+		export.setBounds(0, 0, 100, 50);
+		export.addActionListener(new ActionListener(){
+			@SuppressWarnings("unchecked")
+			public void actionPerformed(ActionEvent e){
+				JSONObject jSon = new JSONObject();
+				JSONArray moveTiles = new JSONArray();
+				
+				BufferedImage img = mapPane.exportImg();
+				MoveTile[][] eMoveTiles = mapPane.exportMove();
+				int mapeTSize = mapPane.getTileSize();
+				
+				String fileName = ".";
+				do{
+					fileName = JOP.input("Enter File Name(DO NOT Include Extension)");
+				}while(fileName.contains("."));
+				try {
+					ImageIO.write(img, "png", new File(fileName + ".png"));
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				jSon.put("Map Name", fileName + ".png");
+				
+				jSon.put("Tile Size", mapeTSize);
+				
+				for(int c1 = 0; c1 < eMoveTiles.length; c1 ++){
+					JSONArray moveTemp = new JSONArray();
+					for(int c2 = 0; c2 < eMoveTiles[c1].length; c2 ++){
+						moveTemp.add(eMoveTiles[c1][c2].getValue());
+					}
+					moveTiles.add(moveTemp);
+				}
+				jSon.put("Move Tiles", moveTiles);
+				try{
+				PrintWriter writer = new PrintWriter(new FileWriter(new File(fileName + "Config.txt")));
+				writer.write(jSon.toJSONString());
+				writer.close();
+				}catch(IOException err){
+					err.printStackTrace();
+				}
+			}
+		});
 		contentPane = new JDesktopPane();
 		setContentPane(contentPane);
 		contentPane.setLayout(new BorderLayout());
@@ -65,7 +118,7 @@ public class BuilderFrame extends JFrame {
 		menuPane.setBorder(new MatteBorder(0, 0, 3, 0, Color.black));
 		contentPane.add(mainPane, BorderLayout.CENTER);
 		contentPane.add(menuPane, BorderLayout.NORTH);
-		mapPane = new MapPanel(img, width, height, new TilesPanel(img, tileSize), new MovePanel(tileSize), tileSize);
+		mapPane = new MapPanel(img, width, height, new TilesPanel(img, tileSize), new MovePanel(tileSize), tileSize, toolPane);
 		buildInternalFrames(mapPane, mapPane.getMPane());
 		JButton background = new JButton("Background");
 		background.setFont(FONT);
@@ -111,7 +164,7 @@ public class BuilderFrame extends JFrame {
 			public void actionPerformed(ActionEvent arg0){
 				TilesPanel tPane = mapPane.getTPane();
 				MovePanel movePane = mapPane.getMPane();
-				mapPane = new MapPanel(mapPane.getTPane().getImg(), 640, 640, mapPane.getTPane(), mapPane.getMPane(), tileSize);
+				mapPane = new MapPanel(mapPane.getTPane().getImg(), 640, 640, mapPane.getTPane(), mapPane.getMPane(), tileSize, toolPane);
 				map.dispose();
 				map = null;
 				buildMapFrame(mapPane, moveFrame);
@@ -122,8 +175,10 @@ public class BuilderFrame extends JFrame {
 		menuPane.add(newMap);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+		menuPane.add(export);
 		menuPane.add(exit); 
 
+//		toolOptions();
 	}
 	
 	public void resetTilesPanel(){
@@ -150,8 +205,19 @@ public class BuilderFrame extends JFrame {
 		TilesPanel tiles = mapPane.getTPane();
 		tiles.setPreferredSize(new Dimension(tiles.getImg().getWidth(), tiles.getImg().getHeight()));
 //		tilesFrame.setBounds(100, 100, (390 < tiles.getWidth()) ? 390 : tiles.getWidth() + tileSize / 2, 
-//				(390 < mapPane.getWidth()) ? 390 : mapPane.getSetHeight() + tileSize / 2);
-		tilesFrame.setBounds(500, 500, 390, 390);
+//				(390 < mapPane.getHeight()) ? 390 : mapPane.getSetHeight() + tileSize / 2);
+//		tilesFrame.setBounds(500, 500, 390, 390);
+		int width = 0, height = 0;
+		if(tiles.getImg().getWidth() > 1200 || tiles.getImg().getWidth() < 390)
+			width = 390;
+		else
+			width = tiles.getImg().getWidth();
+		if(tiles.getImg().getHeight() > 1200 || tiles.getImg().getHeight() < 390)
+			height = 390;
+		else
+			height = tiles.getImg().getHeight();
+		tilesFrame.setBounds(100, 100, width, height
+				);
 		JScrollPane scroll = new JScrollPane(tiles);
 //		scroll.setOpaque(false);
 //		scroll.getViewport().setOpaque(false);
@@ -165,8 +231,18 @@ public class BuilderFrame extends JFrame {
 		JPanel buttonsPane = buildLayerButtons(mapPane, moveFrame);
 //		map.setBounds(100, 100, (390 < mapPane.getWidth()) ? 390 : mapPane.getWidth() + tileSize / 2, 
 //				(390 < mapPane.getHeight()) ? 390 : mapPane.getSetHeight() + tileSize / 2);
-		map.setBounds(100, 100, 390, 390);
+//		map.setBounds(100, 100, 390, 390);
+		int width = 0, height = 0;
+		if(mapPane.getSetWidth() > 1200 || mapPane.getSetWidth() < 390)
+			width = 390;
+		else
+			width = mapPane.getSetWidth();
+		if(mapPane.getSetHeight() > 1200 || mapPane.getSetHeight() < 390)
+			height = 390;
+		else
+			height = mapPane.getSetHeight();
 		map.setLayout(new BorderLayout());
+		map.setBounds(100, 100, width, height);
 		mapPane.setPreferredSize(new Dimension(mapPane.getSetWidth() + tileSize / 2, mapPane.getSetHeight() + tileSize / 2));
 		JScrollPane scroll = new JScrollPane(mapPane);
 		map.add(scroll, BorderLayout.CENTER);
@@ -174,6 +250,11 @@ public class BuilderFrame extends JFrame {
 
 		mainPane.add(map);
 		map.setVisible(true);
+	}
+	
+	public void toolOptions(){
+		mainPane.add(toolPane);
+		
 	}
 
 	public JPanel buildLayerButtons(MapPanel mapPane, JInternalFrame moveFrame) {

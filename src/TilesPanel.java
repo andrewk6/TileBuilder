@@ -74,6 +74,16 @@ class TilesPanel extends JPanel {
 		return selCoords;
 	}
 	
+	private void drawGridLines(Graphics g) {
+		g.setColor(Color.black);
+		for (int c1 = tileSize; c1 < ((img.getWidth() < img.getHeight()) ? img.getHeight() : img.getWidth()); c1 += tileSize) {
+			if(!(c1 > img.getWidth()))
+				g.drawLine(c1, 0, c1, img.getHeight());
+			if(!(c1 > img.getHeight()))
+				g.drawLine(0, c1, img.getWidth(), c1);
+		}
+	}
+	
 	public int[][] getMultiSel(){
 		int curSpot = 0;
 		int[][] selCoords = new int[getNumSelected()][2];
@@ -129,6 +139,7 @@ class TilesPanel extends JPanel {
 			for(int c1 = 0; c1 < boxCoords.length; c1 ++)
 				g.fillRect(boxCoords[c1][0], boxCoords[c1][1], tileSize, tileSize);
 		}
+		drawGridLines(g);
 	}
 
 	public BufferedImage getImg() {

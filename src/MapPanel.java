@@ -8,7 +8,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
+import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import javax.imageio.ImageIO;
 import javax.swing.Box;
@@ -30,9 +35,14 @@ public class MapPanel extends JPanel {
 	private boolean drawMoveLayer;
 	private Image background;
 	private MovePanel mPane;
+	private ToolPane toolPane;
+	private int[][] multiDrawRef;
 
-	public MapPanel(BufferedImage img, int width, int height, TilesPanel tPane, MovePanel mPane, int tileSize) {
+	public MapPanel(BufferedImage img, int width, int height, TilesPanel tPane, MovePanel mPane, 
+			int tileSize, ToolPane toolPane) {
 		super();
+		multiDrawRef = new int[2][2];
+		this.toolPane = toolPane;
 		setPreferredSize(new Dimension(width, height));
 		background = null;
 		setBackground(Color.GRAY);
@@ -49,11 +59,18 @@ public class MapPanel extends JPanel {
 		layer3 = new Image[height / tileSize][width / tileSize];
 		previewLayer = new Image[height / tileSize][width / tileSize];
 		walking = new MoveTile[height / tileSize][width / tileSize];
-		nullWalking();
+		fillWalking();
+//		nullWalking();
 		buildListeners();
 	}
+
+	public void fillWalking(){
+		for(int c1 = 0; c1 < walking.length; c1 ++)
+			for(int c2 = 0; c2 < walking[c1].length; c2 ++)
+				walking[c1][c2] = new MoveTile(Color.RED, 1);
+	}
 	
-	public void buildListeners(){
+	public void buildListeners() {
 		addMouseMotionListener(new MouseMotionAdapter() {
 			public void mouseMoved(MouseEvent e) {
 				int x, y;
@@ -70,7 +87,7 @@ public class MapPanel extends JPanel {
 							}
 							repaint();
 						}
-					}else{
+					} else {
 						clearPreview();
 						repaint();
 					}
@@ -89,32 +106,37 @@ public class MapPanel extends JPanel {
 			public void mouseDragged(MouseEvent e) {
 				if (SwingUtilities.isLeftMouseButton(e) && !e.isShiftDown()) {
 					if (tPane.isSelected() || mPane.isSelected()) {
-						System.out.println("Drawing Layer");
-						switch (drawingLayer) {
-						case 0:
-							if (tPane.isSelected() && !tPane.isMultiSel())
-								layer1[e.getY() / tileSize][e.getX() / tileSize] = img.getSubimage(
-										tPane.getSelected()[0], tPane.getSelected()[1], tileSize, tileSize);
-							else if (tPane.isMultiSel()) {
-								System.out.println("Multipane Drawing");
-								layer1 = tPane.multiUpdate(layer1, e.getY() / tileSize, e.getX() / tileSize);
+						if(toolPane.getTool() == ToolPane.POINT){
+							System.out.println("Drawing Layer");
+							switch (drawingLayer) {
+							case 0:
+								if (tPane.isSelected() && !tPane.isMultiSel())
+									layer1[e.getY() / tileSize][e.getX() / tileSize] = img.getSubimage(
+											tPane.getSelected()[0], tPane.getSelected()[1], tileSize, tileSize);
+								else if (tPane.isMultiSel()) {
+									System.out.println("Multipane Drawing");
+									layer1 = tPane.multiUpdate(layer1, e.getY() / tileSize, e.getX() / tileSize);
+								}
+								break;
+							case 1:
+								if (tPane.isSelected())
+									layer2[e.getY() / tileSize][e.getX() / tileSize] = img.getSubimage(
+											tPane.getSelected()[0], tPane.getSelected()[1], tileSize, tileSize);
+								break;
+							case 2:
+								if (tPane.isSelected())
+									layer3[e.getY() / tileSize][e.getX() / tileSize] = img.getSubimage(
+											tPane.getSelected()[0], tPane.getSelected()[1], tileSize, tileSize);
+								break;
+							case 3:
+								if (mPane.isSelected())
+									walking[e.getY() / tileSize][e.getX() / tileSize] = mPane
+											.getTile(mPane.getSelected()[0] / tileSize, mPane.getSelected()[1] / tileSize);
+								break;
 							}
-							break;
-						case 1:
-							if (tPane.isSelected())
-								layer2[e.getY() / tileSize][e.getX() / tileSize] = img.getSubimage(
-										tPane.getSelected()[0], tPane.getSelected()[1], tileSize, tileSize);
-							break;
-						case 2:
-							if (tPane.isSelected())
-								layer3[e.getY() / tileSize][e.getX() / tileSize] = img.getSubimage(
-										tPane.getSelected()[0], tPane.getSelected()[1], tileSize, tileSize);
-							break;
-						case 3:
-							if (mPane.isSelected())
-								walking[e.getY() / tileSize][e.getX() / tileSize] = mPane
-										.getTile(mPane.getSelected()[0] / tileSize, mPane.getSelected()[1] / tileSize);
-							break;
+						}else{
+							multiDrawRef[1][0] = e.getX() / tileSize;
+							multiDrawRef[1][1] = e.getY() / tileSize;
 						}
 					}
 				} else if (SwingUtilities.isRightMouseButton(e) && !e.isShiftDown()) {
@@ -122,7 +144,7 @@ public class MapPanel extends JPanel {
 					switch (drawingLayer) {
 					case 0:
 						if (tPane.isSelected())
-							layer1[e.getY() / tileSize][e.getX() / tileSize] = null; 
+							layer1[e.getY() / tileSize][e.getX() / tileSize] = null;
 						break;
 					case 1:
 						if (tPane.isSelected())
@@ -223,6 +245,17 @@ public class MapPanel extends JPanel {
 				clearPreview();
 				repaint();
 			}
+			
+			public void mouseReleased(MouseEvent e){
+				if(toolPane.getTool() == ToolPane.RECT){
+					int length = 0, width = 0;
+					length = multiDrawRef[1][0] - multiDrawRef[0][0];
+					width = multiDrawRef[1][1] - multiDrawRef[0][1];
+					if(width < 0 && length > 0){
+						
+					}
+				}
+			}
 
 			private void clearPreview() {
 				for (int c1 = 0; c1 < previewLayer.length; c1++)
@@ -234,32 +267,37 @@ public class MapPanel extends JPanel {
 				System.out.println("Clicked");
 				if (SwingUtilities.isLeftMouseButton(e) && !e.isShiftDown()) {
 					if (tPane.isSelected() || mPane.isSelected()) {
-						System.out.println("Drawing Layer");
-						switch (drawingLayer) {
-						case 0:
-							if (tPane.isSelected() && !tPane.isMultiSel())
-								layer1[e.getY() / tileSize][e.getX() / tileSize] = img.getSubimage(
-										tPane.getSelected()[0], tPane.getSelected()[1], tileSize, tileSize);
-							else if (tPane.isMultiSel()) {
-								System.out.println("Multipane Drawing");
-								layer1 = tPane.multiUpdate(layer1, e.getY() / tileSize, e.getX() / tileSize);
+						if(toolPane.getTool() == ToolPane.POINT){
+							System.out.println("Drawing Layer");
+							switch (drawingLayer) {
+							case 0:
+								if (tPane.isSelected() && !tPane.isMultiSel())
+									layer1[e.getY() / tileSize][e.getX() / tileSize] = img.getSubimage(
+											tPane.getSelected()[0], tPane.getSelected()[1], tileSize, tileSize);
+								else if (tPane.isMultiSel()) {
+									System.out.println("Multipane Drawing");
+									layer1 = tPane.multiUpdate(layer1, e.getY() / tileSize, e.getX() / tileSize);
+								}
+								break;
+							case 1:
+								if (tPane.isSelected())
+									layer2[e.getY() / tileSize][e.getX() / tileSize] = img.getSubimage(
+											tPane.getSelected()[0], tPane.getSelected()[1], tileSize, tileSize);
+								break;
+							case 2:
+								if (tPane.isSelected())
+									layer3[e.getY() / tileSize][e.getX() / tileSize] = img.getSubimage(
+											tPane.getSelected()[0], tPane.getSelected()[1], tileSize, tileSize);
+								break;
+							case 3:
+								if (mPane.isSelected())
+									walking[e.getY() / tileSize][e.getX() / tileSize] = mPane
+											.getTile(mPane.getSelected()[0] / tileSize, mPane.getSelected()[1] / tileSize);
+								break;
 							}
-							break;
-						case 1:
-							if (tPane.isSelected())
-								layer2[e.getY() / tileSize][e.getX() / tileSize] = img.getSubimage(
-										tPane.getSelected()[0], tPane.getSelected()[1], tileSize, tileSize);
-							break;
-						case 2:
-							if (tPane.isSelected())
-								layer3[e.getY() / tileSize][e.getX() / tileSize] = img.getSubimage(
-										tPane.getSelected()[0], tPane.getSelected()[1], tileSize, tileSize);
-							break;
-						case 3:
-							if (mPane.isSelected())
-								walking[e.getY() / tileSize][e.getX() / tileSize] = mPane
-										.getTile(mPane.getSelected()[0] / tileSize, mPane.getSelected()[1] / tileSize);
-							break;
+						}else{
+							multiDrawRef[0][0] = e.getX() / tileSize;
+							multiDrawRef[0][1] = e.getY() / tileSize;
 						}
 					}
 				} else if (SwingUtilities.isRightMouseButton(e) && !e.isShiftDown()) {
@@ -406,12 +444,14 @@ public class MapPanel extends JPanel {
 			return;
 
 		Image img = layer[x][y];
-		if (img != null && oldTile == null)
+		if ((img != null && oldTile == null) || img == null && oldTile != null) {
 			return;
+		}
 		if (oldTile != null)
-			if (!oldTile.equals(img))
+			if (!imgToSign(oldTile).equals(imgToSign(img))) {
 				return;
-
+			}
+		System.out.println("Painting and moving");
 		layer[x][y] = newTile;
 
 		fill(layer, x - 1, y, newTile, oldTile);
@@ -420,12 +460,40 @@ public class MapPanel extends JPanel {
 		fill(layer, x, y + 1, newTile, oldTile);
 	}
 
+	public String imgToSign(Image img) {
+		BufferedImage bimg = (BufferedImage) img;
+		MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("MD5");
+			ByteBuffer bb = ByteBuffer.allocate(4 * bimg.getWidth());
+			for (int y = bimg.getHeight() - 1; y >= 0; y--) {
+				bb.clear();
+				for (int x = bimg.getWidth() - 1; x >= 0; x--) {
+					bb.putInt(bimg.getRGB(x, y));
+				}
+				md.update(bb.array());
+			}
+			byte[] digBytes = md.digest();
+			StringBuilder sb = new StringBuilder();
+			for (byte b : digBytes) {
+			  sb.append(String.format("%02X", b & 0xff));
+			}
+			String signature = sb.toString();
+			return signature;
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+		
+	}
+
 	public void paintComponent(Graphics g) {
 		g.setColor(Color.white);
 		g.fillRect(0, 0, getWidth(), getHeight());
 		g.setColor(Color.black);
 		g.fillRect(0, 0, width, height);
-		if(background != null)
+		if (background != null)
 			g.drawImage(background, 0, 0, null);
 		for (int c1 = 0; c1 < layer1.length; c1++)
 			for (int c2 = 0; c2 < layer1[c1].length; c2++) {
@@ -480,12 +548,12 @@ public class MapPanel extends JPanel {
 	public TilesPanel getTPane() {
 		return tPane;
 	}
-	
-	public MovePanel getMPane(){
+
+	public MovePanel getMPane() {
 		return mPane;
 	}
-	
-	public void setMPane(MovePanel mPane){
+
+	public void setMPane(MovePanel mPane) {
 		this.mPane = mPane;
 	}
 
@@ -512,19 +580,39 @@ public class MapPanel extends JPanel {
 	public void setDrawMove(boolean drawing) {
 		drawMoveLayer = drawing;
 	}
-	
-	public void setBackground(Image background){
+
+	public void setBackground(Image background) {
 		this.background = background.getScaledInstance(width, height, Image.SCALE_SMOOTH);
 		repaint();
 	}
-	
-	public void clearBackground(){
+
+	public void clearBackground() {
 		this.background = null;
 		repaint();
 	}
-	
-	public void setTileMap(TilesPanel tiles){
+
+	public void setTileMap(TilesPanel tiles) {
 		this.tPane = tiles;
 		img = tiles.getImg();
+	}
+	
+	public BufferedImage exportImg(){
+		BufferedImage collapsedImage = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
+		Graphics g = collapsedImage.getGraphics();
+		g.drawImage(background, 0, 0, null);
+		for (int c1 = 0; c1 < layer1.length; c1++)
+			for (int c2 = 0; c2 < layer1[c1].length; c2++) {
+				if (layer1[c1][c2] != null)
+					g.drawImage(layer1[c1][c2], c2 * tileSize, c1 * tileSize, null);
+				if (layer2[c1][c2] != null)
+					g.drawImage(layer2[c1][c2], c2 * tileSize, c1 * tileSize, null);
+				if (layer3[c1][c2] != null)
+					g.drawImage(layer3[c1][c2], c2 * tileSize, c1 * tileSize, null);
+			}
+		return collapsedImage;
+	}
+	
+	public MoveTile[][] exportMove(){
+		return walking;
 	}
 }
